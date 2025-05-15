@@ -9,33 +9,6 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      liquorlink: {
-        Row: {
-          beer: string | null
-          created_at: string
-          id: number
-          mixers: string | null
-          spirits: string | null
-          wine: string | null
-        }
-        Insert: {
-          beer?: string | null
-          created_at?: string
-          id?: number
-          mixers?: string | null
-          spirits?: string | null
-          wine?: string | null
-        }
-        Update: {
-          beer?: string | null
-          created_at?: string
-          id?: number
-          mixers?: string | null
-          spirits?: string | null
-          wine?: string | null
-        }
-        Relationships: []
-      }
       students: {
         Row: {
           created_at: string

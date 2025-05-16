@@ -9,6 +9,83 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      inventory: {
+        Row: {
+          created_at: string
+          id: string
+          low_stock_threshold: number
+          product_id: string
+          quantity: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          low_stock_threshold?: number
+          product_id: string
+          quantity?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          low_stock_threshold?: number
+          product_id?: string
+          quantity?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inventory_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      products: {
+        Row: {
+          alcohol_content: number | null
+          brand: string | null
+          category: string | null
+          created_at: string
+          description: string | null
+          id: string
+          image: string | null
+          name: string
+          price: number
+          updated_at: string
+          volume: number | null
+        }
+        Insert: {
+          alcohol_content?: number | null
+          brand?: string | null
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          id: string
+          image?: string | null
+          name: string
+          price: number
+          updated_at?: string
+          volume?: number | null
+        }
+        Update: {
+          alcohol_content?: number | null
+          brand?: string | null
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          image?: string | null
+          name?: string
+          price?: number
+          updated_at?: string
+          volume?: number | null
+        }
+        Relationships: []
+      }
       students: {
         Row: {
           created_at: string

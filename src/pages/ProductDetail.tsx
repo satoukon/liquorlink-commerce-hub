@@ -1,54 +1,76 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ShoppingCart, Minus, Plus, ArrowLeft } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import { ArrowLeft, ShoppingCart, Star } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { useCart } from '../contexts/CartContext';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import Cart from '../components/Cart';
-import { Button } from '@/components/ui/button';
-import { getProductById, getProductsByCategory, Product } from '../data/products';
-import { useCart } from '../contexts/CartContext';
-import ProductCard from '../components/ProductCard';
+import { getProductById } from '../services/productService';
 
 const ProductDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { addToCart } = useCart();
-  const [quantity, setQuantity] = useState(1);
-  
-  const product = getProductById(id || '');
-  
-  if (!product) {
+
+  const { data: product, isLoading, error } = useQuery({
+    queryKey: ['product', id],
+    queryFn: () => id ? getProductById(id) : Promise.resolve(undefined),
+  });
+
+  if (isLoading) {
     return (
       <div className="min-h-screen flex flex-col bg-background">
         <Navbar />
-        <div className="flex-1 flex items-center justify-center flex-col">
-          <h1 className="text-2xl font-bold mb-4">Product Not Found</h1>
-          <Button onClick={() => navigate('/')}>
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Home
-          </Button>
-        </div>
+        <Cart />
+        <main className="flex-grow container mx-auto px-4 py-8">
+          <div className="animate-pulse">
+            <div className="bg-muted h-8 w-32 mb-4 rounded"></div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div className="bg-muted h-96 rounded"></div>
+              <div className="space-y-4">
+                <div className="bg-muted h-10 w-3/4 rounded"></div>
+                <div className="bg-muted h-6 w-1/4 rounded"></div>
+                <div className="bg-muted h-20 w-full rounded"></div>
+                <div className="bg-muted h-8 w-1/2 rounded"></div>
+                <div className="bg-muted h-12 w-full rounded"></div>
+              </div>
+            </div>
+          </div>
+        </main>
         <Footer />
       </div>
     );
   }
 
-  // Get related products from the same category
-  const relatedProducts = getProductsByCategory(product.category)
-    .filter(p => p.id !== product.id)
-    .slice(0, 4);
+  if (error || !product) {
+    return (
+      <div className="min-h-screen flex flex-col bg-background">
+        <Navbar />
+        <Cart />
+        <main className="flex-grow container mx-auto px-4 py-8">
+          <div className="text-center py-12">
+            <h2 className="text-2xl font-bold mb-4">Product Not Found</h2>
+            <p className="mb-8">Sorry, we couldn't find the product you're looking for.</p>
+            <Button onClick={() => navigate('/products')}>
+              <ArrowLeft className="mr-2" />
+              Back to Products
+            </Button>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
 
   const handleAddToCart = () => {
-    addToCart(product, quantity);
+    addToCart(product, 1);
   };
 
-  const decreaseQuantity = () => {
-    setQuantity(prev => Math.max(1, prev - 1));
-  };
-
-  const increaseQuantity = () => {
-    setQuantity(prev => Math.min(product.stock, prev + 1));
+  const handleBackClick = () => {
+    navigate(-1);
   };
 
   return (
@@ -56,117 +78,82 @@ const ProductDetail: React.FC = () => {
       <Navbar />
       <Cart />
       
-      <main className="flex-1 container mx-auto px-4 py-8">
+      <main className="flex-grow container mx-auto px-4 py-8">
         <Button 
           variant="ghost" 
-          className="mb-6"
-          onClick={() => navigate(-1)}
+          className="mb-6" 
+          onClick={handleBackClick}
         >
           <ArrowLeft className="mr-2 h-4 w-4" />
           Back
         </Button>
         
-        <div className="grid md:grid-cols-2 gap-8 mb-12">
-          <div className="bg-card rounded-lg overflow-hidden">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          {/* Product Image */}
+          <div className="aspect-square bg-muted rounded-lg overflow-hidden">
             <img 
               src={product.image} 
-              alt={product.name}
-              className="w-full h-full object-cover object-center"
+              alt={product.name} 
+              className="w-full h-full object-cover"
             />
           </div>
           
-          <div>
-            <div className="mb-2">
-              <span className="text-sm text-muted-foreground capitalize">
-                {product.category}
-              </span>
-            </div>
-            <h1 className="text-3xl font-bold mb-2">{product.name}</h1>
-            <div className="text-lg text-muted-foreground mb-4">{product.brand}</div>
-            
-            <div className="flex items-center mb-6">
-              <span className="text-2xl font-bold">${product.price.toFixed(2)}</span>
-              {product.stock <= 5 && product.stock > 0 && (
-                <span className="ml-4 bg-amber-500 text-white text-xs px-2 py-1 rounded">
-                  Low Stock
-                </span>
-              )}
-              {product.stock === 0 && (
-                <span className="ml-4 bg-destructive text-white text-xs px-2 py-1 rounded">
-                  Out of Stock
-                </span>
-              )}
+          {/* Product Details */}
+          <div className="space-y-6">
+            <div>
+              <h1 className="text-3xl font-bold">{product.name}</h1>
+              <p className="text-lg text-muted-foreground">{product.brand}</p>
             </div>
             
-            <div className="flex items-center space-x-4 mb-6">
-              <div className="flex items-center border rounded-md">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-10 w-10 rounded-none"
-                  onClick={decreaseQuantity}
-                  disabled={quantity <= 1 || product.stock === 0}
-                >
-                  <Minus className="h-4 w-4" />
-                </Button>
-                <span className="w-12 text-center">{quantity}</span>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-10 w-10 rounded-none"
-                  onClick={increaseQuantity}
-                  disabled={quantity >= product.stock || product.stock === 0}
-                >
-                  <Plus className="h-4 w-4" />
-                </Button>
+            <div className="flex items-center">
+              <div className="flex">
+                {[...Array(5)].map((_, i) => (
+                  <Star 
+                    key={i} 
+                    className={`h-5 w-5 ${i < 4 ? "text-yellow-400 fill-yellow-400" : "text-gray-300"}`} 
+                  />
+                ))}
+              </div>
+              <span className="ml-2 text-muted-foreground">(42 reviews)</span>
+            </div>
+            
+            <p className="text-lg">{product.description}</p>
+            
+            <div className="flex flex-wrap gap-4">
+              <div className="p-2 bg-card rounded-md">
+                <p className="text-sm text-muted-foreground">Volume</p>
+                <p className="font-medium">{product.volume}ml</p>
               </div>
               
-              <Button
-                size="lg"
-                onClick={handleAddToCart}
-                disabled={product.stock === 0}
-                className="flex-1"
-              >
-                <ShoppingCart className="mr-2 h-5 w-5" />
-                Add to Cart
-              </Button>
-            </div>
-            
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="bg-card p-4 rounded-lg">
-                  <div className="text-sm text-muted-foreground mb-1">Volume</div>
-                  <div className="font-medium">{product.volume}ml</div>
-                </div>
-                <div className="bg-card p-4 rounded-lg">
-                  <div className="text-sm text-muted-foreground mb-1">Alcohol Content</div>
-                  <div className="font-medium">{product.alcoholContent}%</div>
-                </div>
+              <div className="p-2 bg-card rounded-md">
+                <p className="text-sm text-muted-foreground">Alcohol</p>
+                <p className="font-medium">{product.alcoholContent}%</p>
               </div>
               
-              <div className="bg-card p-4 rounded-lg">
-                <div className="text-sm text-muted-foreground mb-1">Stock</div>
-                <div className="font-medium">{product.stock} available</div>
+              <div className="p-2 bg-card rounded-md">
+                <p className="text-sm text-muted-foreground">Category</p>
+                <p className="font-medium capitalize">{product.category}</p>
               </div>
             </div>
-          </div>
-        </div>
-        
-        <div className="mb-12">
-          <h2 className="text-xl font-bold mb-4">Product Description</h2>
-          <p className="text-muted-foreground">{product.description}</p>
-        </div>
-        
-        {relatedProducts.length > 0 && (
-          <div>
-            <h2 className="text-xl font-bold mb-6">You Might Also Like</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-              {relatedProducts.map((relatedProduct) => (
-                <ProductCard key={relatedProduct.id} product={relatedProduct} />
-              ))}
+            
+            <div className="flex justify-between items-center">
+              <p className="text-3xl font-bold">${product.price.toFixed(2)}</p>
+              <p className={`${product.stock > 0 ? "text-green-600" : "text-red-600"} font-medium`}>
+                {product.stock > 0 ? `${product.stock} in stock` : "Out of Stock"}
+              </p>
             </div>
+            
+            <Button 
+              size="lg" 
+              className="w-full text-lg" 
+              onClick={handleAddToCart}
+              disabled={product.stock === 0}
+            >
+              <ShoppingCart className="mr-2 h-5 w-5" />
+              Add to Cart
+            </Button>
           </div>
-        )}
+        </div>
       </main>
       
       <Footer />

@@ -1,7 +1,8 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { getCategories } from '../data/products';
+import { useQuery } from '@tanstack/react-query';
+import { getCategories } from '../services/productService';
 
 interface CategoryFilterProps {
   selectedCategory: string;
@@ -14,17 +15,30 @@ const CategoryFilter: React.FC<CategoryFilterProps> = ({
   onCategoryChange,
   vertical = false
 }) => {
-  const categories = getCategories();
+  const { data: categories = ['all'], isLoading } = useQuery({
+    queryKey: ['categories'],
+    queryFn: getCategories
+  });
 
+  if (isLoading) {
+    return (
+      <div className={`flex ${vertical ? 'flex-col space-y-2' : 'flex-row flex-wrap gap-2'}`}>
+        {[...Array(4)].map((_, i) => (
+          <div key={i} className="bg-muted h-9 w-20 animate-pulse rounded-md"></div>
+        ))}
+      </div>
+    );
+  }
+  
   return (
-    <div className={`${vertical ? 'flex flex-col gap-2' : 'flex flex-wrap gap-2'} mb-6`}>
+    <div className={`flex ${vertical ? 'flex-col space-y-2' : 'flex-row flex-wrap gap-2'}`}>
       {categories.map((category) => (
         <Button
           key={category}
           variant={selectedCategory === category ? "default" : "outline"}
-          onClick={() => onCategoryChange(category)}
+          size="sm"
           className={`capitalize ${vertical ? 'justify-start' : ''}`}
-          size={vertical ? "sm" : "default"}
+          onClick={() => onCategoryChange(category)}
         >
           {category}
         </Button>

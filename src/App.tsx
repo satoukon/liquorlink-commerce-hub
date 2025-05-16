@@ -12,8 +12,16 @@ import ProductDetail from "./pages/ProductDetail";
 import InventoryManagement from "./pages/InventoryManagement";
 import NotFound from "./pages/NotFound";
 
-// Create a new QueryClient instance
-const queryClient = new QueryClient();
+// Create a new QueryClient instance with configuration
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60, // 1 minute
+      refetchOnWindowFocus: false,
+      retry: 1,
+    },
+  },
+});
 
 const App: React.FC = () => {
   return (

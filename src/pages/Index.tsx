@@ -1,23 +1,20 @@
 
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { ArrowRight } from 'lucide-react';
+import React from 'react';
+import { useQuery } from '@tanstack/react-query';
 import Navbar from '../components/Navbar';
-import ProductCard from '../components/ProductCard';
-import CategoryFilter from '../components/CategoryFilter';
-import Cart from '../components/Cart';
 import Footer from '../components/Footer';
+import Cart from '../components/Cart';
+import ProductCard from '../components/ProductCard';
 import { Button } from '@/components/ui/button';
-import { getProductsByCategory, getFeaturedProducts } from '../data/products';
+import { ArrowRight } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { getFeaturedProducts } from '../services/productService';
 
 const HomePage: React.FC = () => {
-  const [selectedCategory, setSelectedCategory] = useState('all');
-  const featuredProducts = getFeaturedProducts();
-  const filteredProducts = getProductsByCategory(selectedCategory);
-
-  const handleCategoryChange = (category: string) => {
-    setSelectedCategory(category);
-  };
+  const { data: featuredProducts = [], isLoading } = useQuery({
+    queryKey: ['featuredProducts'],
+    queryFn: getFeaturedProducts,
+  });
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -28,96 +25,126 @@ const HomePage: React.FC = () => {
       <section className="bg-card py-16 md:py-24">
         <div className="container mx-auto px-4">
           <div className="max-w-3xl mx-auto text-center">
-            <h1 className="text-4xl md:text-5xl font-bold mb-4">
-              Premium Spirits Delivered to Your Door
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6">
+              Premium Drinks, Delivered to Your Door
             </h1>
-            <p className="text-xl text-muted-foreground mb-8">
-              Discover our vast collection of quality liquors, wines, and mixers.
-              Fast delivery, exceptional selection.
+            <p className="text-lg text-muted-foreground mb-8">
+              Discover our handpicked selection of the finest beers, wines, and spirits with fast delivery to your doorstep.
             </p>
             <div className="flex flex-col sm:flex-row justify-center gap-4">
-              <Button asChild size="lg">
-                <Link to="/products">
-                  Shop Now
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Link>
-              </Button>
-              <Button variant="outline" size="lg">
-                <Link to="/about">About Us</Link>
+              <Link to="/products">
+                <Button size="lg" className="w-full sm:w-auto">Shop Now</Button>
+              </Link>
+              <Button variant="outline" size="lg" className="w-full sm:w-auto">
+                Learn More
               </Button>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Featured Products */}
-      <section className="py-12">
+      {/* Featured Products Section */}
+      <section className="py-16">
         <div className="container mx-auto px-4">
           <div className="flex justify-between items-center mb-8">
-            <h2 className="text-2xl font-bold">Featured Products</h2>
-            <Button variant="link" asChild>
-              <Link to="/products">
-                View All <ArrowRight className="ml-1 h-4 w-4" />
-              </Link>
-            </Button>
+            <h2 className="text-3xl font-bold">Featured Products</h2>
+            <Link to="/products" className="text-primary flex items-center hover:underline">
+              View All <ArrowRight className="ml-2 h-4 w-4" />
+            </Link>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            {featuredProducts.map((product) => (
-              <ProductCard key={product.id} product={product} />
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Browse By Category */}
-      <section className="py-12 bg-card">
-        <div className="container mx-auto px-4">
-          <h2 className="text-2xl font-bold mb-8">Browse Products</h2>
-          <CategoryFilter 
-            selectedCategory={selectedCategory} 
-            onCategoryChange={handleCategoryChange} 
-          />
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            {filteredProducts.slice(0, 8).map((product) => (
-              <ProductCard key={product.id} product={product} />
-            ))}
-          </div>
-          {filteredProducts.length > 8 && (
-            <div className="text-center mt-8">
-              <Button asChild>
-                <Link to={`/products?category=${selectedCategory}`}>
-                  View All {selectedCategory} Products
-                </Link>
-              </Button>
+          
+          {isLoading ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {[...Array(4)].map((_, index) => (
+                <div key={index} className="bg-muted rounded-lg h-64 animate-pulse"></div>
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {featuredProducts.slice(0, 4).map((product) => (
+                <ProductCard key={product.id} product={product} />
+              ))}
             </div>
           )}
         </div>
       </section>
-
-      {/* About Section */}
-      <section className="py-12">
+      
+      {/* Categories Section */}
+      <section className="py-16 bg-muted/30">
         <div className="container mx-auto px-4">
-          <div className="grid md:grid-cols-2 gap-8 items-center">
-            <div>
-              <h2 className="text-2xl font-bold mb-4">About LiquorLink</h2>
-              <p className="text-muted-foreground mb-4">
-                LiquorLink is your premium destination for fine spirits, wines, craft beers, and cocktail essentials.
-                We pride ourselves on offering a curated selection of the highest quality beverages from around the world.
-              </p>
-              <p className="text-muted-foreground mb-6">
-                With fast delivery and expert recommendations, we bring the liquor store experience to the comfort of your home.
-              </p>
-              <Button asChild>
-                <Link to="/about">Learn More</Link>
-              </Button>
+          <h2 className="text-3xl font-bold mb-8 text-center">Browse By Category</h2>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+            <Link to="/products?category=wine" className="group">
+              <div className="bg-card rounded-lg p-8 text-center transition-shadow hover:shadow-md">
+                <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <span className="text-2xl">🍷</span>
+                </div>
+                <h3 className="font-semibold text-lg group-hover:text-primary">Wines</h3>
+              </div>
+            </Link>
+            
+            <Link to="/products?category=beer" className="group">
+              <div className="bg-card rounded-lg p-8 text-center transition-shadow hover:shadow-md">
+                <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <span className="text-2xl">🍺</span>
+                </div>
+                <h3 className="font-semibold text-lg group-hover:text-primary">Beers</h3>
+              </div>
+            </Link>
+            
+            <Link to="/products?category=spirits" className="group">
+              <div className="bg-card rounded-lg p-8 text-center transition-shadow hover:shadow-md">
+                <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <span className="text-2xl">🥃</span>
+                </div>
+                <h3 className="font-semibold text-lg group-hover:text-primary">Spirits</h3>
+              </div>
+            </Link>
+            
+            <Link to="/products?category=mixers" className="group">
+              <div className="bg-card rounded-lg p-8 text-center transition-shadow hover:shadow-md">
+                <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <span className="text-2xl">🍹</span>
+                </div>
+                <h3 className="font-semibold text-lg group-hover:text-primary">Mixers</h3>
+              </div>
+            </Link>
+          </div>
+        </div>
+      </section>
+      
+      {/* Benefits Section */}
+      <section className="py-16">
+        <div className="container mx-auto px-4">
+          <h2 className="text-3xl font-bold mb-8 text-center">Why Choose Us</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="text-center p-6">
+              <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span className="text-xl">🚚</span>
+              </div>
+              <h3 className="font-semibold text-lg mb-2">Fast Delivery</h3>
+              <p className="text-muted-foreground">Get your favorite drinks delivered to your doorstep within 24 hours.</p>
             </div>
-            <div className="bg-muted rounded-lg h-80 flex items-center justify-center">
-              <span className="text-muted-foreground">Store Image</span>
+            
+            <div className="text-center p-6">
+              <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span className="text-xl">🏆</span>
+              </div>
+              <h3 className="font-semibold text-lg mb-2">Premium Selection</h3>
+              <p className="text-muted-foreground">Curated selection of high-quality alcoholic beverages from around the world.</p>
+            </div>
+            
+            <div className="text-center p-6">
+              <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span className="text-xl">💯</span>
+              </div>
+              <h3 className="font-semibold text-lg mb-2">Satisfaction Guaranteed</h3>
+              <p className="text-muted-foreground">Not satisfied? We offer hassle-free returns and refunds.</p>
             </div>
           </div>
         </div>
       </section>
-
+      
       <Footer />
     </div>
   );

@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Filter, SlidersHorizontal } from 'lucide-react';
 import Navbar from '../components/Navbar';
@@ -8,7 +8,9 @@ import CategoryFilter from '../components/CategoryFilter';
 import Footer from '../components/Footer';
 import Cart from '../components/Cart';
 import { Button } from '@/components/ui/button';
-import { getProductsByCategory, getCategories } from '../data/products';
+import { getProductsByCategory, getCategories } from '../services/productService';
+import { Product } from '@/types/product';
+import { useQuery } from '@tanstack/react-query';
 import {
   Sheet,
   SheetContent,
@@ -23,7 +25,18 @@ const ShopPage: React.FC = () => {
   const categoryFromUrl = searchParams.get('category') || 'all';
   
   const [selectedCategory, setSelectedCategory] = useState<string>(categoryFromUrl);
-  const products = getProductsByCategory(selectedCategory);
+  
+  // Fetch categories
+  const { data: categories = ['all'] } = useQuery({
+    queryKey: ['categories'],
+    queryFn: getCategories
+  });
+  
+  // Fetch products by category
+  const { data: products = [], isLoading: isLoadingProducts } = useQuery({
+    queryKey: ['products', selectedCategory],
+    queryFn: () => getProductsByCategory(selectedCategory),
+  });
 
   const handleCategoryChange = (category: string) => {
     setSelectedCategory(category);
@@ -113,7 +126,13 @@ const ShopPage: React.FC = () => {
                 </div>
               </div>
 
-              {products.length > 0 ? (
+              {isLoadingProducts ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                  {[...Array(8)].map((_, index) => (
+                    <div key={index} className="bg-muted rounded-lg h-64 animate-pulse"></div>
+                  ))}
+                </div>
+              ) : products.length > 0 ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                   {products.map((product) => (
                     <ProductCard key={product.id} product={product} />

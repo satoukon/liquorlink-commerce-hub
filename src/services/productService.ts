@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { Product, Category } from "@/types/product";
 
@@ -17,7 +16,7 @@ export const fetchProducts = async (): Promise<Product[]> => {
     id: product.id,
     name: product.name,
     brand: product.brand || "",
-    category: product.categories?.name || product.category || "mixers",
+    category: product.categories?.name || "mixers",
     category_id: product.category_id || product.categories?.id,
     volume: product.volume || 0,
     alcoholContent: product.alcohol_content || 0,

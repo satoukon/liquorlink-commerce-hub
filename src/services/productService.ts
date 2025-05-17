@@ -108,3 +108,45 @@ export const getCategoriesWithDetails = async (): Promise<Category[]> => {
 
   return data as Category[];
 };
+
+// New function to create a product
+export const createProduct = async (product: Omit<Product, 'id' | 'featured' | 'stock'>): Promise<Product> => {
+  // Transform the product data to match the database schema
+  const productData = {
+    name: product.name,
+    brand: product.brand,
+    category_id: product.category_id,
+    volume: product.volume,
+    alcohol_content: product.alcoholContent,
+    price: product.price,
+    image: product.image,
+    description: product.description
+  };
+
+  const { data, error } = await supabase
+    .from("products")
+    .insert(productData)
+    .select("*, categories(name, id)")
+    .single();
+
+  if (error) {
+    console.error("Error creating product:", error);
+    throw error;
+  }
+
+  // Transform the returned data to match our Product type
+  return {
+    id: data.id,
+    name: data.name,
+    brand: data.brand || "",
+    category: data.categories?.name || "mixers",
+    category_id: data.category_id || data.categories?.id,
+    volume: data.volume || 0,
+    alcoholContent: data.alcohol_content || 0,
+    price: data.price,
+    image: data.image || "/placeholder.svg",
+    description: data.description || "",
+    stock: 0,
+    featured: false
+  };
+};

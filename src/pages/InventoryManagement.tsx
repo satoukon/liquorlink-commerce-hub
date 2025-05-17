@@ -1,12 +1,12 @@
 
 import React, { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
+import { toast } from '@/components/ui/sonner';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import Cart from '../components/Cart';
 import { supabase } from '@/integrations/supabase/client';
-import { Product } from '../data/products';
-import { Plus, Edit, Trash2, AlertCircle } from 'lucide-react';
+import { Plus, Edit, Trash2, AlertCircle, PackagePlus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Table,
@@ -18,6 +18,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import {
   Dialog,
   DialogContent,
@@ -38,6 +39,9 @@ import {
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useAuth } from '@/contexts/AuthContext';
+import { createProduct, getCategoriesWithDetails } from '../services/productService';
+import { Product, Category } from '../types/product';
 
 // Define interfaces
 interface InventoryItem {
@@ -61,14 +65,30 @@ const inventoryFormSchema = z.object({
   lowStockThreshold: z.coerce.number().min(1, 'Threshold must be at least 1'),
 });
 
+// Create product form schema
+const productFormSchema = z.object({
+  name: z.string().min(2, 'Name is required and must be at least 2 characters'),
+  brand: z.string().min(1, 'Brand is required'),
+  category_id: z.string().min(1, 'Category is required'),
+  volume: z.coerce.number().min(0, 'Volume must be 0 or higher'),
+  alcoholContent: z.coerce.number().min(0, 'Alcohol content must be 0 or higher').max(100, 'Alcohol content cannot exceed 100%'),
+  price: z.coerce.number().min(0.01, 'Price must be greater than 0'),
+  image: z.string().default('/placeholder.svg'),
+  description: z.string().optional(),
+});
+
 type InventoryFormValues = z.infer<typeof inventoryFormSchema>;
+type ProductFormValues = z.infer<typeof productFormSchema>;
 
 const InventoryManagement: React.FC = () => {
   const { toast } = useToast();
+  const { authState } = useAuth();
   const [products, setProducts] = useState<ProductWithInventory[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isNewProductDialogOpen, setIsNewProductDialogOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<ProductWithInventory | null>(null);
   const [filter, setFilter] = useState('');
   
@@ -90,12 +110,59 @@ const InventoryManagement: React.FC = () => {
     },
   });
 
+  const productForm = useForm<ProductFormValues>({
+    resolver: zodResolver(productFormSchema),
+    defaultValues: {
+      name: '',
+      brand: '',
+      category_id: '',
+      volume: 0,
+      alcoholContent: 0,
+      price: 0,
+      image: '/placeholder.svg',
+      description: '',
+    },
+  });
+
+  // Check if user is admin
+  useEffect(() => {
+    if (!authState.isAdmin) {
+      toast({
+        title: "Access Denied",
+        description: "You need admin privileges to access this page",
+        variant: "destructive",
+      });
+      // Redirect to home after a short delay
+      setTimeout(() => {
+        window.location.href = '/';
+      }, 3000);
+    }
+  }, [authState.isAdmin, toast]);
+
+  // Fetch categories for product form
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const categoriesData = await getCategoriesWithDetails();
+        setCategories(categoriesData);
+      } catch (error) {
+        console.error('Error fetching categories:', error);
+      }
+    };
+    
+    fetchCategories();
+  }, []);
+
   // Fetch products and inventory data
   const fetchProductsWithInventory = async () => {
     setLoading(true);
     try {
       // Fetch all products from our local data
-      const localProducts = (await import('../data/products')).products;
+      const { data: productsData, error: productsError } = await supabase
+        .from('products')
+        .select('*, categories(name, id)');
+        
+      if (productsError) throw productsError;
       
       // Fetch inventory data from Supabase
       const { data: inventoryData, error } = await supabase
@@ -105,12 +172,23 @@ const InventoryManagement: React.FC = () => {
       if (error) throw error;
 
       // Map inventory data to products
-      const productsWithInventory = localProducts.map(product => {
+      const productsWithInventory = productsData.map(product => {
         const inventoryItem = inventoryData?.find(item => item.product_id === product.id) as InventoryItem | undefined;
         const isLowStock = inventoryItem ? inventoryItem.quantity <= inventoryItem.low_stock_threshold : false;
         
         return {
-          ...product,
+          id: product.id,
+          name: product.name,
+          brand: product.brand || "",
+          category: product.categories?.name || "mixers",
+          category_id: product.category_id || product.categories?.id,
+          volume: product.volume || 0,
+          alcoholContent: product.alcohol_content || 0,
+          price: product.price,
+          image: product.image || "/placeholder.svg",
+          description: product.description || "",
+          stock: inventoryItem?.quantity || 0,
+          featured: false,
           inventory: inventoryItem,
           isLowStock
         };
@@ -232,6 +310,39 @@ const InventoryManagement: React.FC = () => {
     }
   };
 
+  // Handle adding new product
+  const handleAddProduct = async (values: ProductFormValues) => {
+    try {
+      await createProduct({
+        name: values.name,
+        brand: values.brand,
+        category: "", // This will be filled from category_id
+        category_id: values.category_id,
+        volume: values.volume,
+        alcoholContent: values.alcoholContent,
+        price: values.price,
+        image: values.image,
+        description: values.description || "",
+      });
+
+      toast({
+        title: 'Product Created',
+        description: 'New product has been created successfully',
+      });
+
+      setIsNewProductDialogOpen(false);
+      productForm.reset();
+      await fetchProductsWithInventory();
+    } catch (error) {
+      console.error('Error creating product:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to create new product',
+        variant: 'destructive',
+      });
+    }
+  };
+
   // Handle deleting inventory
   const handleDeleteInventory = async (inventoryId: string) => {
     try {
@@ -277,6 +388,22 @@ const InventoryManagement: React.FC = () => {
       setIsEditDialogOpen(true);
     }
   };
+
+  if (!authState.isAdmin) {
+    return (
+      <div className="min-h-screen flex flex-col bg-background">
+        <Navbar />
+        <main className="flex-grow container mx-auto px-4 py-8 flex items-center justify-center">
+          <div className="text-center">
+            <h1 className="text-2xl font-bold mb-4">Access Denied</h1>
+            <p>You need admin privileges to access this page.</p>
+            <p>Redirecting to home...</p>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -363,6 +490,155 @@ const InventoryManagement: React.FC = () => {
                     
                     <DialogFooter>
                       <Button type="submit">Save</Button>
+                    </DialogFooter>
+                  </form>
+                </Form>
+              </DialogContent>
+            </Dialog>
+            
+            {/* New Product Button */}
+            <Dialog open={isNewProductDialogOpen} onOpenChange={setIsNewProductDialogOpen}>
+              <DialogTrigger asChild>
+                <Button className="whitespace-nowrap" variant="secondary">
+                  <PackagePlus className="mr-2 h-4 w-4" /> New Product
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-md">
+                <DialogHeader>
+                  <DialogTitle>Add New Product</DialogTitle>
+                  <DialogDescription>
+                    Create a new product in the inventory
+                  </DialogDescription>
+                </DialogHeader>
+                
+                <Form {...productForm}>
+                  <form onSubmit={productForm.handleSubmit(handleAddProduct)} className="space-y-4">
+                    <FormField
+                      control={productForm.control}
+                      name="name"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Product Name</FormLabel>
+                          <FormControl>
+                            <Input {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={productForm.control}
+                      name="brand"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Brand</FormLabel>
+                          <FormControl>
+                            <Input {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={productForm.control}
+                      name="category_id"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Category</FormLabel>
+                          <FormControl>
+                            <select
+                              {...field}
+                              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                            >
+                              <option value="">Select a category</option>
+                              {categories.map((category) => (
+                                <option key={category.id} value={category.id}>
+                                  {category.name}
+                                </option>
+                              ))}
+                            </select>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <div className="grid grid-cols-2 gap-4">
+                      <FormField
+                        control={productForm.control}
+                        name="volume"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Volume (ml)</FormLabel>
+                            <FormControl>
+                              <Input type="number" min="0" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={productForm.control}
+                        name="alcoholContent"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Alcohol %</FormLabel>
+                            <FormControl>
+                              <Input type="number" min="0" max="100" step="0.1" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                    
+                    <FormField
+                      control={productForm.control}
+                      name="price"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Price ($)</FormLabel>
+                          <FormControl>
+                            <Input type="number" min="0.01" step="0.01" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={productForm.control}
+                      name="image"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Image URL</FormLabel>
+                          <FormControl>
+                            <Input {...field} placeholder="/placeholder.svg" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={productForm.control}
+                      name="description"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Description</FormLabel>
+                          <FormControl>
+                            <Textarea {...field} rows={3} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <DialogFooter>
+                      <Button type="submit">Create Product</Button>
                     </DialogFooter>
                   </form>
                 </Form>

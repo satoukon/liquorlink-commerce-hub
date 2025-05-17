@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { User, Session } from "@supabase/supabase-js";
 import { AuthState, UserProfile } from "@/types/auth";
 import { useToast } from "@/components/ui/use-toast";
+import { useNavigate } from "react-router-dom";
 
 const initialState: AuthState = {
   user: null,
@@ -148,8 +149,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         description: "Welcome back!",
       });
       
-      // Force page reload for clean state
-      window.location.href = '/';
+      // Instead of forcing page reload, we'll update the auth state directly
+      if (data.user) {
+        const profile = await fetchUserProfile(data.user.id);
+        setAuthState({
+          user: data.user,
+          profile,
+          session: data.session,
+          isLoading: false,
+          isAdmin: !!profile?.is_admin,
+        });
+      }
     } catch (error: any) {
       toast({
         title: "Sign in failed",
@@ -205,9 +215,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       toast({
         title: "Signed out successfully",
       });
-      
-      // Force page reload for clean state
-      window.location.href = '/';
     } catch (error: any) {
       toast({
         title: "Sign out failed",

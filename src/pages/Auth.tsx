@@ -70,11 +70,13 @@ const Auth = () => {
   // Handle login submission
   const onLoginSubmit = async (values: z.infer<typeof loginSchema>) => {
     await signIn(values.email, values.password);
+    // The redirect will happen in the useEffect when authState updates
   };
 
   // Handle register submission
   const onRegisterSubmit = async (values: z.infer<typeof registerSchema>) => {
     await signUp(values.email, values.password);
+    setActiveTab("login");
   };
 
   if (authState.isLoading) {

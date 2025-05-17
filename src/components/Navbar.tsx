@@ -1,10 +1,11 @@
 
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ShoppingCart, Menu, X, Search, Wine, UserRound } from 'lucide-react';
+import { ShoppingCart, Menu, X, Search, Wine } from 'lucide-react';
 import { useCart } from '../contexts/CartContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import UserMenu from './UserMenu';
 
 const Navbar: React.FC = () => {
   const { getCartCount, setIsOpen } = useCart();
@@ -75,9 +76,7 @@ const Navbar: React.FC = () => {
               )}
             </Button>
             
-            <Button variant="ghost" size="icon" className="mr-2">
-              <UserRound className="h-5 w-5" />
-            </Button>
+            <UserMenu />
             
             <Button variant="ghost" size="icon" className="md:hidden" onClick={toggleMenu}>
               {isMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}

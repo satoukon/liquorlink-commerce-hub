@@ -90,7 +90,6 @@ export type Database = {
         Row: {
           alcohol_content: number | null
           brand: string | null
-          category: string | null
           category_id: string | null
           created_at: string
           description: string | null
@@ -104,7 +103,6 @@ export type Database = {
         Insert: {
           alcohol_content?: number | null
           brand?: string | null
-          category?: string | null
           category_id?: string | null
           created_at?: string
           description?: string | null
@@ -118,7 +116,6 @@ export type Database = {
         Update: {
           alcohol_content?: number | null
           brand?: string | null
-          category?: string | null
           category_id?: string | null
           created_at?: string
           description?: string | null
@@ -137,14 +134,34 @@ export type Database = {
             referencedRelation: "categories"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "products_category_fkey"
-            columns: ["category"]
-            isOneToOne: false
-            referencedRelation: "category"
-            referencedColumns: ["name"]
-          },
         ]
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          id: string
+          is_admin: boolean | null
+          updated_at: string
+          username: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          id: string
+          is_admin?: boolean | null
+          updated_at?: string
+          username?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          id?: string
+          is_admin?: boolean | null
+          updated_at?: string
+          username?: string | null
+        }
+        Relationships: []
       }
       students: {
         Row: {

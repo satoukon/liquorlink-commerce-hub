@@ -1,11 +1,11 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { Product } from "@/types/product";
+import { Product, Category } from "@/types/product";
 
 export const fetchProducts = async (): Promise<Product[]> => {
   const { data: products, error } = await supabase
     .from("products")
-    .select("*");
+    .select("*, categories(name, id)");
 
   if (error) {
     console.error("Error fetching products:", error);
@@ -17,7 +17,8 @@ export const fetchProducts = async (): Promise<Product[]> => {
     id: product.id,
     name: product.name,
     brand: product.brand || "",
-    category: product.category as any || "mixers",
+    category: product.categories?.name || product.category || "mixers",
+    category_id: product.category_id || product.categories?.id,
     volume: product.volume || 0,
     alcoholContent: product.alcohol_content || 0,
     price: product.price,
@@ -67,7 +68,10 @@ export const getProductById = async (id: string): Promise<Product | undefined> =
 
 export const getProductsByCategory = async (category: string): Promise<Product[]> => {
   const products = await getProductsWithStock();
+  
   if (category === 'all') return products;
+  
+  // Filter by category name
   return products.filter(product => product.category === category);
 };
 
@@ -78,8 +82,9 @@ export const getFeaturedProducts = async (): Promise<Product[]> => {
 
 export const getCategories = async (): Promise<string[]> => {
   const { data, error } = await supabase
-    .from("products")
-    .select("category");
+    .from("categories")
+    .select("name")
+    .order('name');
 
   if (error) {
     console.error("Error fetching categories:", error);
@@ -87,6 +92,20 @@ export const getCategories = async (): Promise<string[]> => {
   }
 
   // Extract unique categories
-  const categories = new Set<string>(data.map(item => item.category).filter(Boolean));
-  return ['all', ...Array.from(categories)];
+  const categories = data.map(item => item.name);
+  return ['all', ...categories];
+};
+
+export const getCategoriesWithDetails = async (): Promise<Category[]> => {
+  const { data, error } = await supabase
+    .from("categories")
+    .select("*")
+    .order('name');
+
+  if (error) {
+    console.error("Error fetching detailed categories:", error);
+    throw error;
+  }
+
+  return data as Category[];
 };

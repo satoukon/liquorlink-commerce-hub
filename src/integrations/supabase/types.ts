@@ -9,6 +9,48 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      categories: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      category: {
+        Row: {
+          created_at: string
+          id: number
+          name: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: number
+          name?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: number
+          name?: string | null
+        }
+        Relationships: []
+      }
       inventory: {
         Row: {
           created_at: string
@@ -49,6 +91,7 @@ export type Database = {
           alcohol_content: number | null
           brand: string | null
           category: string | null
+          category_id: string | null
           created_at: string
           description: string | null
           id: string
@@ -62,6 +105,7 @@ export type Database = {
           alcohol_content?: number | null
           brand?: string | null
           category?: string | null
+          category_id?: string | null
           created_at?: string
           description?: string | null
           id: string
@@ -75,6 +119,7 @@ export type Database = {
           alcohol_content?: number | null
           brand?: string | null
           category?: string | null
+          category_id?: string | null
           created_at?: string
           description?: string | null
           id?: string
@@ -84,7 +129,22 @@ export type Database = {
           updated_at?: string
           volume?: number | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "fk_product_category"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "products_category_fkey"
+            columns: ["category"]
+            isOneToOne: false
+            referencedRelation: "category"
+            referencedColumns: ["name"]
+          },
+        ]
       }
       students: {
         Row: {

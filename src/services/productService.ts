@@ -109,10 +109,14 @@ export const getCategoriesWithDetails = async (): Promise<Category[]> => {
   return data as Category[];
 };
 
-// New function to create a product
+// Updated function to create a product
 export const createProduct = async (product: Omit<Product, 'id' | 'featured' | 'stock'>): Promise<Product> => {
+  // Generate a unique ID for the product
+  const productId = crypto.randomUUID();
+
   // Transform the product data to match the database schema
   const productData = {
+    id: productId, // Add the ID field that was missing
     name: product.name,
     brand: product.brand,
     category_id: product.category_id,

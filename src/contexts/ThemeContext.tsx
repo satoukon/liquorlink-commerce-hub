@@ -1,5 +1,7 @@
 
 import React, { createContext, useContext, useEffect, useState } from "react";
+import { useAuth } from "./AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 
 type Theme = "light" | "dark";
 
@@ -23,6 +25,8 @@ export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
     return (savedTheme as Theme) || "dark";
   });
 
+  const { authState } = useAuth();
+
   // Apply theme class to document element
   useEffect(() => {
     const root = window.document.documentElement;
@@ -35,7 +39,48 @@ export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
     root.classList.add(theme);
     
     localStorage.setItem("theme", theme);
-  }, [theme]);
+    
+    // Save theme to user profile if logged in
+    if (authState.user?.id) {
+      const saveThemeToProfile = async () => {
+        try {
+          await supabase
+            .from("profiles")
+            .update({ preferred_theme: theme })
+            .eq("id", authState.user!.id);
+        } catch (error) {
+          console.error("Error saving theme preference:", error);
+        }
+      };
+      
+      saveThemeToProfile();
+    }
+  }, [theme, authState.user?.id]);
+
+  // Fetch theme from user profile when logged in
+  useEffect(() => {
+    const fetchThemePreference = async () => {
+      if (authState.user?.id) {
+        try {
+          const { data, error } = await supabase
+            .from("profiles")
+            .select("preferred_theme")
+            .eq("id", authState.user.id)
+            .single();
+            
+          if (error) throw error;
+          
+          if (data && data.preferred_theme) {
+            setTheme(data.preferred_theme as Theme);
+          }
+        } catch (error) {
+          console.error("Error fetching theme preference:", error);
+        }
+      }
+    };
+    
+    fetchThemePreference();
+  }, [authState.user?.id]);
 
   // Listen for system theme changes
   useEffect(() => {

@@ -27,17 +27,18 @@ export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
 
   const { authState } = useAuth();
 
-  // Apply theme class to document element
+  // Apply theme class to document element immediately when the provider mounts
   useEffect(() => {
     const root = window.document.documentElement;
     
-    // Add transition class before changing theme
+    // Ensure transition when changing theme
     root.classList.add("transition-colors", "duration-300");
     
-    // Update theme class immediately
+    // Update theme class immediately and remove other theme
     root.classList.remove("light", "dark");
     root.classList.add(theme);
     
+    // Store theme preference
     localStorage.setItem("theme", theme);
     
     // Save theme to user profile if logged in
@@ -102,10 +103,7 @@ export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
   const toggleTheme = () => {
-    setTheme(prevTheme => {
-      const newTheme = prevTheme === "light" ? "dark" : "light";
-      return newTheme;
-    });
+    setTheme(prevTheme => prevTheme === "light" ? "dark" : "light");
   };
 
   return (

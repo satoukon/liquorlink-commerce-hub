@@ -34,7 +34,7 @@ export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
     // Add transition class before changing theme
     root.classList.add("transition-colors", "duration-300");
     
-    // Update theme class
+    // Update theme class immediately
     root.classList.remove("light", "dark");
     root.classList.add(theme);
     

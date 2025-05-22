@@ -10,7 +10,10 @@ const ThemeToggle = () => {
   const { theme, toggleTheme } = useTheme();
 
   const handleToggleTheme = () => {
+    // Apply the theme toggle
     toggleTheme();
+    
+    // Show toast notification
     toast(`Switched to ${theme === "light" ? "dark" : "light"} mode`, {
       description: `Theme preference saved.`,
       position: "bottom-right",

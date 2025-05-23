@@ -17,6 +17,7 @@ import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
 import Sample2 from "./pages/Sample2";
 import About from "./pages/About";
+import Contact from "./pages/Contact";
 import ThemeToggleDisplay from "./components/ThemeToggleDisplay";
 
 // Create a new QueryClient instance with configuration
@@ -50,6 +51,7 @@ const App: React.FC = () => {
                   <Route path="/profile" element={<Profile />} />
                   <Route path="/sample2" element={<Sample2 />} />
                   <Route path="/about" element={<About />} />
+                  <Route path="/contact" element={<Contact />} />
                   {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                   <Route path="*" element={<NotFound />} />
                 </Routes>

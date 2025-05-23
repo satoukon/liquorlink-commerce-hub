@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { toast } from '@/components/ui/sonner';
@@ -28,6 +27,7 @@ import {
   DialogTrigger,
   DialogFooter,
 } from "@/components/ui/dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Form,
   FormControl,
@@ -503,7 +503,7 @@ const InventoryManagement: React.FC = () => {
                   <PackagePlus className="mr-2 h-4 w-4" /> New Product
                 </Button>
               </DialogTrigger>
-              <DialogContent className="max-w-md">
+              <DialogContent className="max-w-md max-h-[85vh]">
                 <DialogHeader>
                   <DialogTitle>Add New Product</DialogTitle>
                   <DialogDescription>
@@ -511,69 +511,17 @@ const InventoryManagement: React.FC = () => {
                   </DialogDescription>
                 </DialogHeader>
                 
-                <Form {...productForm}>
-                  <form onSubmit={productForm.handleSubmit(handleAddProduct)} className="space-y-4">
-                    <FormField
-                      control={productForm.control}
-                      name="name"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Product Name</FormLabel>
-                          <FormControl>
-                            <Input {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={productForm.control}
-                      name="brand"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Brand</FormLabel>
-                          <FormControl>
-                            <Input {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={productForm.control}
-                      name="category_id"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Category</FormLabel>
-                          <FormControl>
-                            <select
-                              {...field}
-                              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                            >
-                              <option value="">Select a category</option>
-                              {categories.map((category) => (
-                                <option key={category.id} value={category.id}>
-                                  {category.name}
-                                </option>
-                              ))}
-                            </select>
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <div className="grid grid-cols-2 gap-4">
+                <ScrollArea className="max-h-[60vh] pr-4">
+                  <Form {...productForm}>
+                    <form onSubmit={productForm.handleSubmit(handleAddProduct)} className="space-y-4">
                       <FormField
                         control={productForm.control}
-                        name="volume"
+                        name="name"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Volume (ml)</FormLabel>
+                            <FormLabel>Product Name</FormLabel>
                             <FormControl>
-                              <Input type="number" min="0" {...field} />
+                              <Input {...field} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -582,66 +530,120 @@ const InventoryManagement: React.FC = () => {
                       
                       <FormField
                         control={productForm.control}
-                        name="alcoholContent"
+                        name="brand"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Alcohol %</FormLabel>
+                            <FormLabel>Brand</FormLabel>
                             <FormControl>
-                              <Input type="number" min="0" max="100" step="0.1" {...field} />
+                              <Input {...field} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
                         )}
                       />
-                    </div>
-                    
-                    <FormField
-                      control={productForm.control}
-                      name="price"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Price ($)</FormLabel>
-                          <FormControl>
-                            <Input type="number" min="0.01" step="0.01" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={productForm.control}
-                      name="image"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Image URL</FormLabel>
-                          <FormControl>
-                            <Input {...field} placeholder="/placeholder.svg" />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={productForm.control}
-                      name="description"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Description</FormLabel>
-                          <FormControl>
-                            <Textarea {...field} rows={3} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <DialogFooter>
-                      <Button type="submit">Create Product</Button>
-                    </DialogFooter>
-                  </form>
-                </Form>
+                      
+                      <FormField
+                        control={productForm.control}
+                        name="category_id"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Category</FormLabel>
+                            <FormControl>
+                              <select
+                                {...field}
+                                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                              >
+                                <option value="">Select a category</option>
+                                {categories.map((category) => (
+                                  <option key={category.id} value={category.id}>
+                                    {category.name}
+                                  </option>
+                                ))}
+                              </select>
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <div className="grid grid-cols-2 gap-4">
+                        <FormField
+                          control={productForm.control}
+                          name="volume"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Volume (ml)</FormLabel>
+                              <FormControl>
+                                <Input type="number" min="0" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        
+                        <FormField
+                          control={productForm.control}
+                          name="alcoholContent"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Alcohol %</FormLabel>
+                              <FormControl>
+                                <Input type="number" min="0" max="100" step="0.1" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                      
+                      <FormField
+                        control={productForm.control}
+                        name="price"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Price ($)</FormLabel>
+                            <FormControl>
+                              <Input type="number" min="0.01" step="0.01" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={productForm.control}
+                        name="image"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Image URL</FormLabel>
+                            <FormControl>
+                              <Input {...field} placeholder="/placeholder.svg" />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={productForm.control}
+                        name="description"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Description</FormLabel>
+                            <FormControl>
+                              <Textarea {...field} rows={3} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <DialogFooter className="pt-4">
+                        <Button type="submit">Create Product</Button>
+                      </DialogFooter>
+                    </form>
+                  </Form>
+                </ScrollArea>
               </DialogContent>
             </Dialog>
           </div>

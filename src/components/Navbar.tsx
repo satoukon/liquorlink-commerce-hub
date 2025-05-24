@@ -1,6 +1,6 @@
 
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, FormEvent } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { ShoppingCart, Menu, X, Search, Wine } from 'lucide-react';
 import { useCart } from '../contexts/CartContext';
 import { Button } from '@/components/ui/button';
@@ -11,7 +11,8 @@ const Navbar: React.FC = () => {
   const { getCartCount, setIsOpen } = useCart();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-
+  const navigate = useNavigate();
+  
   const cartCount = getCartCount();
   
   const toggleMenu = () => {
@@ -20,6 +21,14 @@ const Navbar: React.FC = () => {
 
   const closeMenu = () => {
     setIsMenuOpen(false);
+  };
+
+  const handleSearch = (e: FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+      closeMenu();
+    }
   };
 
   return (
@@ -35,7 +44,7 @@ const Navbar: React.FC = () => {
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-8">
-            <div className="relative w-64">
+            <form onSubmit={handleSearch} className="relative w-64">
               <Input
                 type="text"
                 placeholder="Search products..."
@@ -43,8 +52,15 @@ const Navbar: React.FC = () => {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
-              <Search className="absolute right-2 top-2.5 h-4 w-4 text-muted-foreground" />
-            </div>
+              <Button
+                type="submit"
+                variant="ghost"
+                size="icon"
+                className="absolute right-0 top-0 h-10 w-10"
+              >
+                <Search className="h-4 w-4 text-muted-foreground" />
+              </Button>
+            </form>
             <div className="hidden md:flex space-x-4">
               <Link to="/" className="text-foreground hover:text-primary transition-colors">
                 Home
@@ -87,7 +103,7 @@ const Navbar: React.FC = () => {
         {/* Mobile Navigation */}
         {isMenuOpen && (
           <div className="md:hidden mt-4 pt-2 pb-4 border-t border-border animate-fadeIn">
-            <div className="relative mb-4">
+            <form onSubmit={handleSearch} className="relative mb-4">
               <Input
                 type="text"
                 placeholder="Search products..."
@@ -95,8 +111,15 @@ const Navbar: React.FC = () => {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
-              <Search className="absolute right-2 top-2.5 h-4 w-4 text-muted-foreground" />
-            </div>
+              <Button
+                type="submit"
+                variant="ghost"
+                size="icon"
+                className="absolute right-0 top-0 h-10 w-10"
+              >
+                <Search className="h-4 w-4 text-muted-foreground" />
+              </Button>
+            </form>
             <div className="flex flex-col space-y-2">
               <Link 
                 to="/" 
